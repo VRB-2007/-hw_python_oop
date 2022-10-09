@@ -77,9 +77,10 @@ class SportsWalking(Training):
         coeff_calorie_1 = 0.035
         coeff_calorie_2 = 0.029
         mean_speed: float = self.get_mean_speed()
-        return ((coeff_calorie_1 * self.weight + 
+        return (((coeff_calorie_1 * self.weight + 
                                  (mean_speed ** 2 // self.height)
-                                  * coeff_calorie_2 * self.weight) * self.duration * self.MIN_IN_H)
+                                  * coeff_calorie_2 * self.weight)
+                                  * self.duration * self.MIN_IN_H))
         
 
 
