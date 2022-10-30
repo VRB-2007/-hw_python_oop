@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, astuple, fields
 
 
 @dataclass
@@ -17,7 +17,7 @@ class InfoMessage:
                    'Потрачено ккал: {:.3f}.')
 
     def get_message(self) -> str:
-        return self.INFORMATION.format(*asdict(self).values())
+        return self.INFORMATION.format(*astuple(self))
 
 
 @dataclass
@@ -62,7 +62,7 @@ class Running(Training):
 
     def get_spent_calories(self):  # Расчёт калорий для этого класса
         return ((self.CALORIES_MEAN_SPEED_MULTIPLIER
-                * self.get_mean_speed()
+                 * self.get_mean_speed()
                  + self.CALORIES_MEAN_SPEED_SHIFT)
                 * self.weight
                 / self.M_IN_KM
@@ -74,6 +74,7 @@ class SportsWalking(Training):
     """Реализации классов-наследников class SportsWalking"""
     CALORIES_WEIGHT_MULTIPLIER = 0.035
     CALORIES_SPEED_HEIGHT_MULTIPLIER = 0.029
+    # Если менять название, то тесты выдают ошибку
     KMH_IN_MSEC = 0.278
     CM_IN_M = 100
     height: float
@@ -115,15 +116,29 @@ def main(training: Training):
 
 
 TRAINING_TIPES = {
-    'SWM': Swimming,
-    'RUN': Running,
-    'WLK': SportsWalking
+    'SWM': (Swimming, len(fields(Swimming))),
+    'RUN': (Running, len(fields(Running))),
+    'WLK': (SportsWalking, len(fields(SportsWalking)))
 }
 
+ERROR_TRAINING_TEXT = 'Неизвестный код тренировки"{}".'
+ERROR_PARAMS_TEXT = (
+    'Неверное количество параметров для "{}".'
+    ' требовалось {2}, а получили {1}.'
+)
 
-def read_package(workout_type, data):
+
+def read_package(work_type, data):
     """Принимает на вход код тренировки и список её параметров."""
-    return TRAINING_TIPES[workout_type](*data)
+    if work_type not in TRAINING_TIPES:
+        raise NameError(ERROR_TRAINING_TEXT.format(work_type))
+    if TRAINING_TIPES[work_type][1] != len(data):
+        raise ValueError(ERROR_PARAMS_TEXT.format(work_type,
+                                                  len(data),
+                                                  TRAINING_TIPES[work_type][1])
+                         )
+
+    return TRAINING_TIPES[work_type][0](*data)
 
 
 if __name__ == '__main__':
@@ -135,5 +150,4 @@ if __name__ == '__main__':
     ]
 
     for workout_type, data in packages:
-        training = read_package(workout_type, data)
-        main(training)
+        main(read_package(workout_type, data))
